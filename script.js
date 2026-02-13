@@ -1,7 +1,7 @@
 
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
     const colorShift = document.getElementById('colorShift');
     const shiftValue = document.getElementById('shiftValue');
@@ -17,34 +17,47 @@
       shiftValue.textContent = colorShift.value;
     });
 
-    document.getElementById('captureBtn').addEventListener('click', () => {
-  canvas.toBlob((blob) => {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'flipfilm-preview.png';  // Nom auto avec timestamp si tu veux
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }, 'image/png', 0.95);  // Qualité haute PNG pour couleurs
+   document.getElementById('captureBtn').addEventListener('click', async () => {
+  try {
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    const file = new File([blob], 'flipfilm.png', {type: 'image/png'});
+    const options = {suggestedName: 'flipfilm.png', types: [{description: 'Images', accept: {'image/png': ['.png']}}]};
+    const handle = await window.showSaveFilePicker(options);
+    const writable = await handle.createWritable();
+    await writable.write(blob);
+    await writable.close();
+    alert('Saved to gallery/folder!');
+  } catch (e) {
+    // Fallback download
+    canvas.toBlob(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'flipfilm.png'; a.click();
+      URL.revokeObjectURL(url);
+    });
+  }
 });
 
-    async function startCamera() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
-        video.srcObject = stream;
 
-        video.onloadedmetadata = () => {
-          video.play();
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          drawFrame();
-        };
-      } catch (err) {
-        alert("Erreur d'accès à la caméra : " + err.message);
-      }
-    }
+    async function startCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: "environment" } },  // ideal fallback
+      audio: false
+    });
+    video.srcObject = stream;
+    video.onloadedmetadata = () => {
+      video.play();
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      drawFrame();
+    };
+  } catch (err) {
+    console.error('Caméra err:', err);  // Debug console
+    alert("Caméra fail: " + err.name + ' - Autorise HTTPS/permissions');
+  }
+}
+
 
     function drawFrame() {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);

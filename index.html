@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visionneuse de Négatifs</title>
+  <link rel="stylesheet" href="style.css" />
+
+</head>
+<body>
+  <h1>FilmFlip</h1>
+  <video id="video" autoplay playsinline muted></video>
+  <canvas id="canvas"></canvas>
+
+  <div class="controls">
+  <label for="colorShift">Balance des couleurs : <span id="shiftValue">0</span></label>
+  <input type="range" id="colorShift" min="-100" max="100" value="0">
+  
+  <!-- Nouveau contrôle pour la balance des couleurs -->
+  <div class="color-controls">
+    <label for="red">Red</label>
+    <input type="range" id="red" min="-100" max="100" value="0">
+    
+    <label for="green">Green</label>
+    <input type="range" id="green" min="-100" max="100" value="0">
+    
+    <label for="blue">Blue</label>
+    <input type="range" id="blue" min="-100" max="100" value="0">
+  </div>
+  
+  <!-- Contrôles pour luminosité et contraste -->
+  <div class="light-controls">
+    <label for="brightness">Brightness</label>
+    <input type="range" id="brightness" min="-100" max="100" value="0">
+    
+    <label for="contrast">Contrast</label>
+    <input type="range" id="contrast" min="-100" max="100" value="0">
+    
+    <label for="saturation">Saturation</label>
+    <input type="range" id="saturation" min="-100" max="100" value="0">
+  </div>
+  
+  <label>
+    <input type="checkbox" id="bwMode">
+    Mode noir et blanc
+  </label>
+
+  <button id="captureBtn">Capturer l'image</button>
+</div>
+
+  <script src="script.js"></script>
+</body>
+</html>

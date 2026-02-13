@@ -30,7 +30,6 @@
   }, 'image/png', 0.95);  // Qualité haute PNG pour couleurs
 });
 
-
     async function startCamera() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
@@ -64,6 +63,7 @@
 
       for (let i = 0; i < data.length; i += 4) {
         let r = 255 - data[i] + shift + redAdjustment;
+<<<<<<< HEAD
         let g = 255 - data[i+1] + shift + greenAdjustment;
         let b = 255 - data[i+2] + shift + blueAdjustment;
         
@@ -93,6 +93,31 @@
         data[i+2] = Math.min(255, Math.max(0, b));
       }
 
+=======
+        let g = 255 - data[i + 1] + shift + greenAdjustment;
+        let b = 255 - data[i + 2] + shift + blueAdjustment;
+
+        r = r * (contrast / 100 + 1) + brightness;
+        g = g * (contrast / 100 + 1) + brightness;
+        b = b * (contrast / 100 + 1) + brightness;
+
+        if (toBW) {
+          let gray = (r + g + b) / 3;
+          r = g = b = gray;
+        }
+
+        if (saturation !== 0) {
+          let avg = (r + g + b) / 3;
+          r = avg + (r - avg) * (saturation / 100);
+          g = avg + (g - avg) * (saturation / 100);
+          b = avg + (b - avg) * (saturation / 100);
+        }
+
+        data[i] = Math.min(255, Math.max(0, r));
+        data[i + 1] = Math.min(255, Math.max(0, g));
+        data[i + 2] = Math.min(255, Math.max(0, b));
+      }
+>>>>>>> fe07a21d43f7d5465c7c4b596dfc3fd5c0ee7001
 
       ctx.putImageData(frame, 0, 0);
       requestAnimationFrame(drawFrame);

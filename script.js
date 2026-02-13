@@ -1,6 +1,6 @@
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d', { willReadFrequently: true });  // Fix warning
+const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
 const colorShift = document.getElementById('colorShift');
 const shiftValue = document.getElementById('shiftValue');
@@ -14,7 +14,7 @@ const bwMode = document.getElementById('bwMode');
 
 colorShift.addEventListener('input', () => shiftValue.textContent = colorShift.value);
 
-// SAVE BUTTON - Ajouté
+// SAVE MOBILE
 document.getElementById('captureBtn').addEventListener('click', () => {
   canvas.toBlob((blob) => {
     const url = URL.createObjectURL(blob);
@@ -25,7 +25,7 @@ document.getElementById('captureBtn').addEventListener('click', () => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }, 'image/png');
+  }, 'image/png', 0.95);
 });
 
 async function startCamera() {
@@ -36,19 +36,19 @@ async function startCamera() {
     });
     video.srcObject = stream;
     video.onloadedmetadata = () => {
-      video.play();
+      video.play().catch(e => console.log('Play:', e));
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       drawFrame();
     };
   } catch (err) {
     console.error('Cam err:', err);
-    alert("Cam fail: " + err.message + " - Check HTTPS/permissions");
+    alert("Cam fail: " + err.message);
   }
 }
 
 function drawFrame() {
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  ctx.drawImage(video, 0, 0);
   let frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
   let data = frame.data;
   let shift = parseInt(colorShift.value || 0);
@@ -62,22 +62,19 @@ function drawFrame() {
 
   for (let i = 0; i < data.length; i += 4) {
     let r = 255 - data[i] + shift + redAdjustment;
-    let g = 255 - data[i + 1] + shift + greenAdjustment;
-    let b = 255 - data[i + 2] + shift + blueAdjustment;
+    let g = 255 - data[i+1] + shift + greenAdjustment;
+    let b = 255 - data[i+2] + shift + blueAdjustment;
 
-    // MASQUE ORANGE C41
+    // MASQUE C41
     let mask = (r + b - g) * 0.3;
     r = Math.min(255, r + mask);
     b = Math.min(255, b + mask);
 
-    r = r * (contrast / 100 + 1) + brightness;
-    g = g * (contrast / 100 + 1) + brightness;
-    b = b * (contrast / 100 + 1) + brightness;
+    r = (r * (contrast / 100 + 1) + brightness).clamp(0, 255);
+    g = (g * (contrast / 100 + 1) + brightness).clamp(0, 255);
+    b = (b * (contrast / 100 + 1) + brightness).clamp(0, 255);
 
-    if (toBW) {
-      let gray = (r + g + b) / 3;
-      r = g = b = gray;
-    }
+    if (toBW) { let gray = (r + g + b) / 3; r = g = b = gray; }
     if (saturation !== 0) {
       let avg = (r + g + b) / 3;
       r = avg + (r - avg) * (1 + saturation / 100);
@@ -85,13 +82,14 @@ function drawFrame() {
       b = avg + (b - avg) * (1 + saturation / 100);
     }
 
-    data[i] = Math.min(255, Math.max(0, r));
-    data[i + 1] = Math.min(255, Math.max(0, g));
-    data[i + 2] = Math.min(255, Math.max(0, b));
+    data[i] = r; data[i+1] = g; data[i+2] = b;
   }
 
   ctx.putImageData(frame, 0, 0);
   requestAnimationFrame(drawFrame);
 }
 
-startCamera();[file:12]
+// Polyfill clamp
+Number.prototype.clamp = function(min, max) { return Math.min(max, Math.max(min, this)); };
+
+startCamera();

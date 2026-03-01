@@ -15,7 +15,6 @@
   <!-- Header -->
   <div class="hud-top">
     <span class="app-title">FilmFlip</span>
-    <button class="film-badge" id="bwToggleBtn" aria-label="Basculer noir et blanc">C41</button>
   </div>
 
   <!-- Panneau réglages couleurs -->
@@ -52,14 +51,7 @@
       <span class="setting-label">Saturation</span>
       <input type="range" id="saturation" min="-100" max="100" value="0">
     </div>
-    <div class="divider"></div>
-    <div class="setting-row toggle-row">
-      <span class="setting-label">Noir &amp; Blanc</span>
-      <label class="toggle">
-        <input type="checkbox" id="bwMode">
-        <span class="toggle-track"></span>
-      </label>
-    </div>
+    <input type="checkbox" id="bwMode" style="display:none">
     <button class="reset-btn" id="resetBtn">Réinitialiser</button>
   </div>
 
@@ -77,7 +69,7 @@
       <span class="capture-inner"></span>
     </button>
 
-    <div class="hud-spacer"></div>
+    <button class="hud-btn bw-btn" id="bwToggleBtn" aria-label="Basculer noir et blanc">C41</button>
   </div>
 
   <script src="script.js"></script>

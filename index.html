@@ -15,7 +15,7 @@
   <!-- Header -->
   <div class="hud-top">
     <span class="app-title">FilmFlip</span>
-    <span class="film-badge">C41</span>
+    <button class="film-badge" id="bwToggleBtn" aria-label="Basculer noir et blanc">C41</button>
   </div>
 
   <!-- Panneau réglages couleurs -->
@@ -77,13 +77,7 @@
       <span class="capture-inner"></span>
     </button>
 
-    <button class="hud-btn flip-btn" id="flipBtn" aria-label="Retourner caméra">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-        <path d="M1 4v6h6"/>
-        <path d="M23 20v-6h-6"/>
-        <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/>
-      </svg>
-    </button>
+    <div class="hud-spacer"></div>
   </div>
 
   <script src="script.js"></script>

@@ -59,10 +59,20 @@ canvas {
   letter-spacing: 0.15em;
   color: var(--amber);
   border: 1px solid var(--amber);
-  padding: 3px 8px;
+  padding: 5px 10px;
   border-radius: 3px;
-  text-shadow: none;
+  background: transparent;
+  cursor: pointer;
   opacity: 0.9;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  pointer-events: auto;
+}
+
+.film-badge.bw-active {
+  color: #999;
+  border-color: #999;
+  background: rgba(255,255,255,0.07);
 }
 
 /* ── HUD Bottom ── */
@@ -224,30 +234,36 @@ input[type="range"] {
   flex: 1;
   -webkit-appearance: none;
   appearance: none;
-  height: 3px;
+  height: 4px;
   background: rgba(255,255,255,0.2);
   border-radius: 2px;
   outline: none;
+  padding: 10px 0; /* zone de touch plus grande */
 }
 
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 18px;
-  height: 18px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   background: var(--cream);
-  border: 2px solid rgba(0,0,0,0.2);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  border: 2px solid rgba(0,0,0,0.15);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
   cursor: pointer;
 }
 
 input[type="range"]::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   background: var(--cream);
-  border: 2px solid rgba(0,0,0,0.2);
+  border: 2px solid rgba(0,0,0,0.15);
   cursor: pointer;
+}
+
+.hud-spacer {
+  width: 52px;
+  height: 52px;
 }
 
 /* Toggle switch */

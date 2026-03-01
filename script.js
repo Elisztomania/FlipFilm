@@ -15,10 +15,22 @@ const settingsPanel = document.getElementById('settingsPanel');
 const settingsBtn   = document.getElementById('settingsBtn');
 const resetBtn      = document.getElementById('resetBtn');
 const captureBtn    = document.getElementById('captureBtn');
-const flipBtn       = document.getElementById('flipBtn');
+const bwToggleBtn   = document.getElementById('bwToggleBtn');
 
 // Mise à jour label balance
 colorShift.addEventListener('input', () => shiftValue.textContent = colorShift.value);
+
+// ── Bouton B&W en haut à droite ──
+function setBW(active) {
+  bwMode.checked = active;
+  bwToggleBtn.textContent = active ? 'B&W' : 'C41';
+  bwToggleBtn.classList.toggle('bw-active', active);
+}
+
+bwToggleBtn.addEventListener('click', () => setBW(!bwMode.checked));
+
+// Synchroniser si on change le toggle dans le panneau
+bwMode.addEventListener('change', () => setBW(bwMode.checked));
 
 // ── Toggle panneau réglages ──
 settingsBtn.addEventListener('click', () => {
@@ -26,7 +38,6 @@ settingsBtn.addEventListener('click', () => {
   settingsBtn.classList.toggle('active', open);
 });
 
-// Fermer en cliquant à l'extérieur du panneau
 document.addEventListener('pointerdown', (e) => {
   if (settingsPanel.classList.contains('open') &&
       !settingsPanel.contains(e.target) &&
@@ -41,12 +52,11 @@ resetBtn.addEventListener('click', () => {
   [colorShift, redSlider, greenSlider, blueSlider,
    brightnessSlider, contrastSlider, saturationSlider].forEach(s => s.value = 0);
   shiftValue.textContent = '0';
-  bwMode.checked = false;
+  setBW(false);
 });
 
 // ── Capture avec flash visuel ──
 captureBtn.addEventListener('click', async () => {
-  // Flash feedback
   const flash = document.createElement('div');
   flash.className = 'flash-overlay';
   document.body.appendChild(flash);
@@ -65,7 +75,6 @@ captureBtn.addEventListener('click', async () => {
         }
       }
     }
-    // Fallback desktop
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -78,21 +87,16 @@ captureBtn.addEventListener('click', async () => {
 });
 
 // ── Caméra ──
-let facingMode = 'environment';
-let currentStream = null;
-
 async function startCamera() {
-  if (currentStream) currentStream.getTracks().forEach(t => t.stop());
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: facingMode } },
+      video: { facingMode: { ideal: 'environment' } },
       audio: false
     });
-    currentStream = stream;
     video.srcObject = stream;
     video.onloadedmetadata = () => {
       video.play().catch(e => console.log('Play:', e));
-      canvas.width = video.videoWidth;
+      canvas.width  = video.videoWidth;
       canvas.height = video.videoHeight;
     };
   } catch (err) {
@@ -101,11 +105,6 @@ async function startCamera() {
   }
 }
 
-flipBtn.addEventListener('click', () => {
-  facingMode = facingMode === 'environment' ? 'user' : 'environment';
-  startCamera();
-});
-
 // ── Render loop ──
 function clamp(v, min, max) {
   return v < min ? min : v > max ? max : v;
@@ -113,7 +112,6 @@ function clamp(v, min, max) {
 
 function drawFrame() {
   if (video.readyState >= 2) {
-    // Adapter le canvas si la vidéo change de taille (rotation mobile)
     if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
       canvas.width  = video.videoWidth;
       canvas.height = video.videoHeight;
@@ -123,15 +121,15 @@ function drawFrame() {
     const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data  = frame.data;
 
-    const shift         = parseInt(colorShift.value)     || 0;
-    const toBW          = bwMode.checked;
-    const redAdj        = parseInt(redSlider.value)       || 0;
-    const greenAdj      = parseInt(greenSlider.value)     || 0;
-    const blueAdj       = parseInt(blueSlider.value)      || 0;
-    const brightness    = parseInt(brightnessSlider.value)|| 0;
-    const contrast      = parseInt(contrastSlider.value)  || 0;
-    const saturation    = parseInt(saturationSlider.value)|| 0;
-    const contrastFactor  = contrast / 100 + 1;
+    const shift          = parseInt(colorShift.value)      || 0;
+    const toBW           = bwMode.checked;
+    const redAdj         = parseInt(redSlider.value)        || 0;
+    const greenAdj       = parseInt(greenSlider.value)      || 0;
+    const blueAdj        = parseInt(blueSlider.value)       || 0;
+    const brightness     = parseInt(brightnessSlider.value) || 0;
+    const contrast       = parseInt(contrastSlider.value)   || 0;
+    const saturation     = parseInt(saturationSlider.value) || 0;
+    const contrastFactor   = contrast / 100 + 1;
     const saturationFactor = 1 + saturation / 100;
 
     for (let i = 0; i < data.length; i += 4) {
@@ -139,7 +137,6 @@ function drawFrame() {
       let g = 255 - data[i+1] + shift + greenAdj;
       let b = 255 - data[i+2] + shift + blueAdj;
 
-      // Masque orange C41
       const mask = (r + b - g) * 0.3;
       r += mask;
       b += mask;
@@ -173,3 +170,5 @@ function drawFrame() {
 
 startCamera();
 drawFrame();
+
+

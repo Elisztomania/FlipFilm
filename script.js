@@ -14,9 +14,27 @@ const bwMode = document.getElementById('bwMode');
 
 colorShift.addEventListener('input', () => shiftValue.textContent = colorShift.value);
 
-// SAVE MOBILE
-document.getElementById('captureBtn').addEventListener('click', () => {
-  canvas.toBlob((blob) => {
+// SAVE MOBILE — utilise navigator.share() sur iOS/Android, fallback <a download> sinon
+document.getElementById('captureBtn').addEventListener('click', async () => {
+  canvas.toBlob(async (blob) => {
+    // Web Share API (iOS Safari, Android Chrome)
+    if (navigator.share && navigator.canShare) {
+      const file = new File([blob], 'flipfilm.png', { type: 'image/png' });
+      if (navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: 'FlipFilm',
+          });
+          return;
+        } catch (e) {
+          // L'utilisateur a annulé ou erreur — on tombe sur le fallback
+          if (e.name !== 'AbortError') console.warn('Share error:', e);
+          return;
+        }
+      }
+    }
+    // Fallback desktop
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -47,49 +65,61 @@ async function startCamera() {
   }
 }
 
+function clamp(v, min, max) {
+  return v < min ? min : v > max ? max : v;
+}
+
 function drawFrame() {
   ctx.drawImage(video, 0, 0);
-  let frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  let data = frame.data;
-  let shift = parseInt(colorShift.value || 0);
-  let toBW = bwMode.checked;
-  let redAdjustment = parseInt(redSlider.value || 0);
-  let greenAdjustment = parseInt(greenSlider.value || 0);
-  let blueAdjustment = parseInt(blueSlider.value || 0);
-  let brightness = parseInt(brightnessSlider.value || 0);
-  let contrast = parseInt(contrastSlider.value || 0);
-  let saturation = parseInt(saturationSlider.value || 0);
+  const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = frame.data;
+  const shift = parseInt(colorShift.value) || 0;
+  const toBW = bwMode.checked;
+  const redAdj = parseInt(redSlider.value) || 0;
+  const greenAdj = parseInt(greenSlider.value) || 0;
+  const blueAdj = parseInt(blueSlider.value) || 0;
+  const brightness = parseInt(brightnessSlider.value) || 0;
+  const contrast = parseInt(contrastSlider.value) || 0;
+  const saturation = parseInt(saturationSlider.value) || 0;
+  const contrastFactor = contrast / 100 + 1;
+  const saturationFactor = 1 + saturation / 100;
 
   for (let i = 0; i < data.length; i += 4) {
-    let r = 255 - data[i] + shift + redAdjustment;
-    let g = 255 - data[i+1] + shift + greenAdjustment;
-    let b = 255 - data[i+2] + shift + blueAdjustment;
+    let r = 255 - data[i]   + shift + redAdj;
+    let g = 255 - data[i+1] + shift + greenAdj;
+    let b = 255 - data[i+2] + shift + blueAdj;
 
-    // MASQUE C41
-    let mask = (r + b - g) * 0.3;
-    r = Math.min(255, r + mask);
-    b = Math.min(255, b + mask);
+    // Masque orange C41
+    const mask = (r + b - g) * 0.3;
+    r = r + mask;
+    b = b + mask;
 
-    r = (r * (contrast / 100 + 1) + brightness).clamp(0, 255);
-    g = (g * (contrast / 100 + 1) + brightness).clamp(0, 255);
-    b = (b * (contrast / 100 + 1) + brightness).clamp(0, 255);
+    // Brightness / contrast
+    r = clamp(r * contrastFactor + brightness, 0, 255);
+    g = clamp(g * contrastFactor + brightness, 0, 255);
+    b = clamp(b * contrastFactor + brightness, 0, 255);
 
-    if (toBW) { let gray = (r + g + b) / 3; r = g = b = gray; }
-    if (saturation !== 0) {
-      let avg = (r + g + b) / 3;
-      r = avg + (r - avg) * (1 + saturation / 100);
-      g = avg + (g - avg) * (1 + saturation / 100);
-      b = avg + (b - avg) * (1 + saturation / 100);
+    // Noir & blanc
+    if (toBW) {
+      const gray = (r + g + b) / 3;
+      r = g = b = gray;
     }
 
-    data[i] = r; data[i+1] = g; data[i+2] = b;
+    // Saturation
+    if (saturation !== 0) {
+      const avg = (r + g + b) / 3;
+      r = clamp(avg + (r - avg) * saturationFactor, 0, 255);
+      g = clamp(avg + (g - avg) * saturationFactor, 0, 255);
+      b = clamp(avg + (b - avg) * saturationFactor, 0, 255);
+    }
+
+    data[i]   = r;
+    data[i+1] = g;
+    data[i+2] = b;
   }
 
   ctx.putImageData(frame, 0, 0);
   requestAnimationFrame(drawFrame);
 }
-
-// Polyfill clamp
-Number.prototype.clamp = function(min, max) { return Math.min(max, Math.max(min, this)); };
 
 startCamera();
